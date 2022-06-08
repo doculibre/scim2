@@ -568,8 +568,8 @@ public final class Debug
       }
     }
 
-    buffer.append("\" revision=");
-    buffer.append(Version.REVISION_NUMBER);
-    buffer.append(' ');
+    //buffer.append("\" revision=");
+    //buffer.append("");
+    //buffer.append(' ');
   }
 }

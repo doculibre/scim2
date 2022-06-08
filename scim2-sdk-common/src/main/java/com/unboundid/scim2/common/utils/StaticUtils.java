@@ -331,9 +331,9 @@ public final class StaticUtils
       buffer.append(", cause=");
       getStackTrace(cause, buffer);
     }
-    buffer.append(", revision=");
-    buffer.append(Version.REVISION_NUMBER);
-    buffer.append(')');
+    //buffer.append(", revision=");
+    //buffer.append(Version.REVISION_NUMBER);
+    //buffer.append(')');
   }
 
 

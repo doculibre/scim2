@@ -53,12 +53,13 @@ import java.util.List;
     include = JsonTypeInfo.As.PROPERTY,
     property = "op")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = PatchOperation.AddOperation.class,
-        name="add"),
-    @JsonSubTypes.Type(value = PatchOperation.RemoveOperation.class,
-        name="remove"),
-    @JsonSubTypes.Type(value = PatchOperation.ReplaceOperation.class,
-        name="replace")})
+        @JsonSubTypes.Type(value = PatchOperation.AddOperation.class, name="add"),
+        @JsonSubTypes.Type(value = PatchOperation.RemoveOperation.class, name="remove"),
+        @JsonSubTypes.Type(value = PatchOperation.ReplaceOperation.class, name="replace"),
+        @JsonSubTypes.Type(value = PatchOperation.AddOperation.class, name="Add"),
+        @JsonSubTypes.Type(value = PatchOperation.RemoveOperation.class, name="Remove"),
+        @JsonSubTypes.Type(value = PatchOperation.ReplaceOperation.class, name="Replace")
+})
 public abstract class PatchOperation
 {
   static final class AddOperation extends PatchOperation
@@ -75,34 +76,22 @@ public abstract class PatchOperation
      */
     @JsonCreator
     private AddOperation(
-        @JsonProperty(value = "path") final Path path,
-        @JsonProperty(value = "value", required = true) final JsonNode value)
-        throws ScimException
+            @JsonProperty(value = "path") final Path path,
+            @JsonProperty(value = "value", required = true) final JsonNode value)
+            throws ScimException
     {
       super(path);
       if(value == null || value.isNull() ||
-           ((value.isArray() || value.isObject()) && value.size() == 0))
-       {
-         throw BadRequestException.invalidSyntax(
-             "value field must not be null or an empty container");
-       }
+         ((value.isArray() || value.isObject()) && value.size() == 0))
+      {
+        throw BadRequestException.invalidSyntax(
+                "value field must not be null or an empty container");
+      }
       if(path == null && !value.isObject())
       {
         throw BadRequestException.invalidSyntax(
-            "value field must be a JSON object containing the attributes to " +
+                "value field must be a JSON object containing the attributes to " +
                 "add");
-      }
-      if(path != null)
-      {
-        for (Path.Element element : path)
-        {
-          if(element.getValueFilter() != null)
-          {
-            throw BadRequestException.invalidPath(
-                "path field for add operations must not include any value " +
-                    "selection filters");
-          }
-        }
       }
       this.value = value;
     }
@@ -162,8 +151,46 @@ public abstract class PatchOperation
     @Override
     public void apply(final ObjectNode node) throws ScimException
     {
-      JsonUtils.addValue(getPath() == null ? Path.root() :
-          getPath(), node, value);
+      if(getPath() != null)
+      {
+        for (Path.Element element : getPath())
+        {
+          if(element.getValueFilter() != null)
+          {
+            JsonNode fieldNode = node.path(element.getAttribute());
+
+            ArrayNode arrayNode = null;
+            if (fieldNode.isMissingNode()) {
+              arrayNode = node.withArray(element.getAttribute());
+            }
+            else {
+              arrayNode = (ArrayNode) fieldNode;
+            }
+
+            String strType = element.getValueFilter().getAttributePath().toString();
+            String strValue = element.getValueFilter().getComparisonValue().asText();
+
+            ObjectNode newNode = null;
+            for (Iterator<JsonNode> iterator = arrayNode.elements(); iterator.hasNext();)
+            {
+              JsonNode childNode = iterator.next();
+              if ((childNode.get(strType) != null) && (childNode.get(strType).asText().equals(strValue)))
+              {
+                newNode = (ObjectNode) childNode;
+                break;
+              }
+            }
+
+            if (newNode == null) {
+              newNode = arrayNode.addObject();
+            }
+
+            newNode.put(strType, strValue);
+          }
+        }
+      }
+
+      JsonUtils.addValue(getPath() == null ? Path.root() : getPath(), node, value);
       addMissingSchemaUrns(node);
     }
 
