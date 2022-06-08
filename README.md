@@ -117,3 +117,9 @@ Please report bug reports and enhancement requests through this project's [issue
 
 # License
 The UnboundID SCIM2 SDK is available under three licenses: the GNU General Public License version 2 (GPLv2), the GNU Lesser General Public License version 2.1 (LGPLv2.1), and a free-right-to-use license created by UnboundID Corp. See the [LICENSE](https://github.com/pingidentity/scim2/blob/master/resource/LICENSE.txt) file for more info.
+
+# How to make a change in the code
+Use branch scim2-2.3.7-merge
+
+# How to generate the jars
+Use maven install for the corresponding project (ex: UnboundID SCIM2 SDK Common)
